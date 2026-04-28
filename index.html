@@ -1,0 +1,1866 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SCOCAI | 智慧城市AI运营管理中心</title>
+  <!-- 优先加载Font Awesome -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 引入ECharts用于数据可视化（运营中心核心） -->
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#00A896', // 政务级科技绿
+            primaryDark: '#007566',
+            secondary: '#023047', // 深海蓝
+            dark: '#001219', // 指挥中心黑
+            light: '#F8F9FA',
+            warning: '#FFB703', // 预警色
+            danger: '#FB8500',   // 告警色
+            success: '#8ECAE6',  // 正常色
+            aiPurple: '#8B5CF6', // AI主题色
+          },
+          fontFamily: {
+            sans: ['Inter', 'PingFang SC', 'Microsoft YaHei', 'sans-serif'],
+            display: ['Poppins', 'PingFang SC', 'Microsoft YaHei', 'sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .bg-grid-city {
+        background-image: 
+          linear-gradient(rgba(0,168,150,0.05) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0,168,150,0.05) 1px, transparent 1px);
+        background-size: 60px 60px;
+      }
+      .text-shadow-lg {
+        text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+      }
+      .bg-gradient-command {
+        background: linear-gradient(135deg, #001219 0%, #023047 80%);
+      }
+      .section-padding {
+        padding: clamp(3rem, 10vw, 6rem) 0;
+      }
+      .panel-elevation {
+        box-shadow: 0 4px 20px rgba(0,168,150,0.15);
+        transition: all 0.3s ease;
+        border: 1px solid rgba(0,168,150,0.2);
+      }
+      .panel-elevation:hover {
+        box-shadow: 0 8px 30px rgba(0,168,150,0.25);
+      }
+      .status-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+      .mini-stat {
+        background-color: rgba(0,168,150,0.1);
+        border-radius: 8px;
+        padding: 8px 12px;
+        margin: 0 4px;
+        font-size: 12px;
+      }
+      .data-tag {
+        font-size: 11px;
+        padding: 2px 8px;
+        border-radius: 12px;
+        display: inline-block;
+        margin: 0 2px;
+      }
+      /* 科技线条背景样式 */
+      .tech-line-bg {
+        position: relative;
+        overflow: hidden;
+      }
+      .tech-line-bg::before,
+      .tech-line-bg::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0.15;
+        pointer-events: none;
+        z-index: 0;
+      }
+      /* 主线条样式 - 曲线 */
+      .tech-line-bg::before {
+        background: 
+          radial-gradient(circle at 20% 80%, rgba(0,168,150,0.3) 0%, transparent 20%),
+          radial-gradient(circle at 80% 20%, rgba(142,202,230,0.3) 0%, transparent 20%);
+        background-size: 100% 100%;
+        animation: float 15s ease-in-out infinite;
+      }
+      /* 辅助线条样式 - 流动线条 */
+      .tech-line-bg::after {
+        background-image: 
+          linear-gradient(45deg, transparent 49%, rgba(0,168,150,0.2) 50%, transparent 51%),
+          linear-gradient(135deg, transparent 49%, rgba(142,202,230,0.2) 50%, transparent 51%);
+        background-size: 60px 60px;
+        animation: flow 20s linear infinite;
+      }
+      /* 不同面板的线条变体 */
+      .tech-line-traffic::after {
+        background-image: 
+          linear-gradient(30deg, transparent 49%, rgba(0,168,150,0.2) 50%, transparent 51%),
+          linear-gradient(150deg, transparent 49%, rgba(142,202,230,0.2) 50%, transparent 51%);
+      }
+      .tech-line-security::after {
+        background-image: 
+          linear-gradient(60deg, transparent 49%, rgba(251,133,0,0.2) 50%, transparent 51%),
+          linear-gradient(120deg, transparent 49%, rgba(255,183,3,0.2) 50%, transparent 51%);
+      }
+      .tech-line-environment::after {
+        background-image: 
+          linear-gradient(0deg, transparent 49%, rgba(142,202,230,0.2) 50%, transparent 51%),
+          linear-gradient(90deg, transparent 49%, rgba(0,168,150,0.2) 50%, transparent 51%);
+      }
+      .tech-line-government::after {
+        background-image: 
+          radial-gradient(circle, rgba(0,168,150,0.2) 1px, transparent 1px),
+          radial-gradient(circle, rgba(142,202,230,0.2) 1px, transparent 1px);
+        background-size: 30px 30px;
+      }
+      .tech-line-dispatch::after {
+        background-image: 
+          linear-gradient(45deg, rgba(0,168,150,0.1) 1px, transparent 1px),
+          linear-gradient(135deg, rgba(142,202,230,0.1) 1px, transparent 1px);
+        background-size: 40px 40px;
+      }
+      .tech-line-decision::after {
+        background-image: 
+          linear-gradient(0deg, rgba(251,133,0,0.1) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,183,3,0.1) 1px, transparent 1px);
+        background-size: 50px 50px;
+      }
+      /* AI面板特殊样式 */
+      .tech-line-ai::after {
+        background-image: 
+          linear-gradient(45deg, transparent 49%, rgba(139,92,246,0.3) 50%, transparent 51%),
+          linear-gradient(135deg, transparent 49%, rgba(0,168,150,0.2) 50%, transparent 51%);
+        background-size: 50px 50px;
+        animation: flow 15s linear infinite reverse;
+      }
+      /* 城市卡片样式 */
+      .city-card {
+        background: linear-gradient(180deg, rgba(2,48,71,0.6) 0%, rgba(0,18,25,0.8) 100%);
+        border: 1px solid rgba(0,168,150,0.3);
+        border-radius: 12px;
+        transition: all 0.4s ease;
+        overflow: hidden;
+        position: relative;
+      }
+      .city-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: url('https://picsum.photos/id/1031/800/600') center/cover;
+        opacity: 0.1;
+        z-index: 0;
+      }
+      .city-card:hover {
+        transform: translateY(-8px);
+        border-color: rgba(0,168,150,0.8);
+        box-shadow: 0 12px 30px rgba(0,168,150,0.2);
+      }
+      .city-card.active {
+        border-color: rgba(0,168,150,0.8);
+        background: linear-gradient(180deg, rgba(0,168,150,0.3) 0%, rgba(2,48,71,0.8) 100%);
+      }
+      /* AI指数动效 */
+      .ai-pulse {
+        animation: aiPulse 2s ease-in-out infinite;
+      }
+      /* AI思考动效 */
+      .ai-thinking {
+        display: inline-flex;
+        gap: 2px;
+        align-items: center;
+        height: 12px;
+      }
+      .ai-thinking span {
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background-color: #8B5CF6;
+        animation: aiThink 1.4s infinite ease-in-out both;
+      }
+      .ai-thinking span:nth-child(1) { animation-delay: -0.32s; }
+      .ai-thinking span:nth-child(2) { animation-delay: -0.16s; }
+      /* AI语音助手样式 */
+      .ai-assistant {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #8B5CF6 0%, #00A896 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: white;
+        box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+        cursor: pointer;
+        z-index: 999;
+        transition: all 0.3s ease;
+      }
+      .ai-assistant:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 25px rgba(139, 92, 246, 0.6);
+      }
+      /* AI对话面板 */
+      .ai-chat-panel {
+        position: fixed;
+        bottom: 100px;
+        right: 30px;
+        width: 380px;
+        background-color: rgba(0, 18, 25, 0.95);
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        border-radius: 12px;
+        box-shadow: 0 8px 30px rgba(139, 92, 246, 0.2);
+        z-index: 998;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(20px);
+        transition: all 0.3s ease;
+        overflow: hidden;
+      }
+      .ai-chat-panel.show {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+      }
+      .chat-header {
+        padding: 15px;
+        background-color: rgba(139, 92, 246, 0.1);
+        border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .chat-messages {
+        height: 400px;
+        padding: 15px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+      .chat-message {
+        max-width: 85%;
+        padding: 10px 15px;
+        border-radius: 12px;
+        line-height: 1.5;
+      }
+      .chat-message.ai {
+        align-self: flex-start;
+        background-color: rgba(139, 92, 246, 0.1);
+        border: 1px solid rgba(139, 92, 246, 0.2);
+        border-bottom-left-radius: 4px;
+      }
+      .chat-message.user {
+        align-self: flex-end;
+        background-color: rgba(0, 168, 150, 0.1);
+        border: 1px solid rgba(0, 168, 150, 0.2);
+        border-bottom-right-radius: 4px;
+      }
+      .chat-input {
+        padding: 15px;
+        border-top: 1px solid rgba(139, 92, 246, 0.2);
+        display: flex;
+        gap: 10px;
+      }
+      .chat-input input {
+        flex: 1;
+        background-color: rgba(2, 48, 71, 0.5);
+        border: 1px solid rgba(139, 92, 246, 0.2);
+        border-radius: 20px;
+        padding: 10px 15px;
+        color: white;
+        outline: none;
+      }
+      .chat-input button {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: #8B5CF6;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+      }
+      .chat-input button:hover {
+        background-color: #7C3AED;
+      }
+      /* 动画效果 */
+      @keyframes aiPulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.8; transform: scale(1.02); }
+      }
+      @keyframes aiThink {
+        0%, 80%, 100% { transform: scale(0); }
+        40% { transform: scale(1); }
+      }
+      @keyframes float {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        25% { transform: translate(-5px, -5px) scale(1.02); }
+        50% { transform: translate(5px, 5px) scale(0.98); }
+        75% { transform: translate(-5px, 5px) scale(1.01); }
+      }
+      @keyframes flow {
+        0% { background-position: 0 0; }
+        100% { background-position: 120px 120px; }
+      }
+      /* 面板内容层级 */
+      .panel-content {
+        position: relative;
+        z-index: 1;
+        /* 修复面板内容溢出问题 */
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+      /* 英雄区装饰 */
+      .hero-decoration {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 120px;
+        background: linear-gradient(180deg, transparent 0%, rgba(0,18,25,0.8) 100%);
+        z-index: 10;
+      }
+      /* 导航栏优化样式 */
+      .nav-item {
+        position: relative;
+        padding: 20px;
+        white-space: nowrap;
+      }
+      .nav-item::after {
+        content: '';
+        position: absolute;
+        bottom: 16px;
+        left: 8px;
+        width: calc(100% - 16px);
+        height: 2px;
+        background-color: transparent;
+        transition: all 0.3s ease;
+      }
+      .nav-item:hover::after {
+        background-color: #00A896;
+      }
+      .status-group {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 8px;
+      }
+      .status-item {
+        display: flex;
+        align-items: center;
+        gap: 1px;
+      }
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    html {
+      scroll-behavior: smooth;
+      overflow-x: hidden;
+    }
+    body {
+      font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background-color: #001219;
+    }
+    /* 指挥中心数据面板样式 */
+    .data-panel {
+      background-color: rgba(2, 48, 71, 0.4);
+      backdrop-filter: blur(8px);
+      border-radius: 12px;
+      border: 1px solid rgba(0,168,150,0.2);
+      /* 修复面板高度问题 */
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      box-sizing: border-box;
+    }
+    /* AI面板特殊样式 */
+    .ai-panel {
+      background-color: rgba(139, 92, 246, 0.15);
+      border-color: rgba(139, 92, 246, 0.3);
+    }
+    /* 移动端菜单 */
+    .mobile-nav {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 80%;
+      height: 100vh;
+      background-color: #001219;
+      z-index: 99;
+      transform: translateX(100%);
+      transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      border-left: 1px solid rgba(0,168,150,0.2);
+      padding-top: 80px;
+    }
+    .mobile-nav.show {
+      transform: translateX(0);
+    }
+    .mobile-nav a {
+      display: block;
+      padding: 20px 30px;
+      font-size: 18px;
+      border-bottom: 1px solid rgba(0,168,150,0.1);
+    }
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100vh;
+      background-color: rgba(0,18,25,0.8);
+      z-index: 98;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+    .overlay.show {
+      opacity: 1;
+      pointer-events: all;
+    }
+    /* 数字滚动动画 */
+    @keyframes countUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .count-item {
+      animation: countUp 0.8s ease forwards;
+      opacity: 0;
+    }
+    .count-item:nth-child(1) { animation-delay: 0.2s; }
+    .count-item:nth-child(2) { animation-delay: 0.4s; }
+    .count-item:nth-child(3) { animation-delay: 0.6s; }
+    .count-item:nth-child(4) { animation-delay: 0.8s; }
+    .count-item:nth-child(5) { animation-delay: 1.0s; }
+    
+    /* 实时时间更新 */
+    .realtime-clock {
+      font-family: monospace;
+      font-size: 11px;
+      color: rgba(248, 249, 250, 0.6);
+    }
+    
+    /* 修复图表容器高度问题 */
+    .chart-container {
+      flex: 1;
+      min-height: 0; /* 解决flex容器内高度溢出问题 */
+    }
+    
+    /* AI模块高亮样式 */
+    .ai-highlight {
+      border-left: 3px solid #8B5CF6;
+      padding-left: 10px;
+      margin-left: -13px;
+    }
+    
+    /* AI预测标签 */
+    .ai-prediction-tag {
+      background: linear-gradient(90deg, rgba(139,92,246,0.2), rgba(0,168,150,0.2));
+      color: #8B5CF6;
+      font-weight: 500;
+    }
+    
+    /* ========== 导航栏优化 ========== */
+    /* 优化导航栏整体布局 */
+    .header-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+    }
+    /* Logo区域 */
+    .logo-area {
+      flex: 0 0 auto;
+      padding-right: 20px;
+    }
+    /* 导航菜单区域 */
+    .nav-menu-area {
+      flex: 1 1 auto;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+    }
+    /* 状态信息区域 */
+    .status-info-area {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 20px;
+      padding-left: 20px;
+    }
+    /* PC导航菜单优化 */
+    .pc-nav {
+      display: flex;
+      align-items: center;
+      gap: 12px; /* 优化导航项间距 */
+      font-size: 18px; /* 统一字体大小 */
+    }
+    /* 状态文本优化 */
+    .status-text {
+      font-size: 10px;
+      color: rgba(248, 249, 250, 0.7);
+      white-space: nowrap;
+    }
+    /* 状态数值优化 */
+    .status-value {
+      font-size: 12px;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body class="bg-dark text-light overflow-x-hidden">
+  <!-- 全局网格背景 -->
+  <div class="fixed inset-0 bg-grid-city opacity-30 z-0"></div>
+  
+  <!-- 遮罩层 -->
+  <div class="overlay" id="overlay"></div>
+
+  <!-- 头部导航（优化版） -->
+  <header class="fixed w-full top-0 z-50 bg-dark/90 backdrop-blur-2xl border-b border-primary/20">
+    <div class="container mx-auto px-6 md:px-12 lg:px-20 h-20">
+      <div class="header-container">
+        <!-- Logo（运营中心版）- 增强AI标识 -->
+        <div class="logo-area">
+          <a href="#home" class="text-4xl font-extrabold font-display flex items-center">
+            <span class="text-primary">SCOC</span>
+            <span class="text-aiPurple">AI</span><p></p>
+           <span class="ml-2 text-sm text-white/60 hidden md:inline-block">域名概念展示站<p></p>没有实际功能<p>运营系统</span>
+          </a>
+        </div>
+
+        <!-- PC端导航（优化版） -->
+        <div class="nav-menu-area">
+          <nav class="hidden lg:flex pc-nav">
+            <a href="../dn.html" class="nav-item hover:text-primary transition-colors duration-300">域名解读</a>
+            <a href="#monitor" class="nav-item hover:text-primary transition-colors duration-300">实时监控</a>
+            <a href="#dispatch" class="nav-item hover:text-primary transition-colors duration-300">智能调度</a>
+            <a href="#decision" class="nav-item hover:text-primary transition-colors duration-300">AI决策分析</a>
+            <a href="#manage" class="nav-item hover:text-primary transition-colors duration-300">系统管理</a>
+          </nav>
+        </div>
+
+        <!-- 功能区（优化版） -->
+        <div class="status-info-area">
+          <!-- AI运行状态指示器 -->
+          <div class="hidden md:flex status-item">
+            <span class="status-text">AI引擎状态：</span>
+            <span class="flex items-center gap-2 status-value">
+              <span class="status-dot bg-aiPurple ai-pulse"></span>
+              <span class="text-aiPurple">运行中</span>
+              <span class="ai-thinking">
+                <span></span>
+                <span></span>
+                <span></span>
+              </span>
+            </span>
+          </div>
+          
+          <!-- 运营状态指示器 -->
+          <div class="hidden md:flex status-item">
+            <span class="status-text">当前运行状态：</span>
+            <span class="flex items-center gap-6 status-value">
+              <span class="flex items-center gap-2">
+                <span class="status-dot bg-success"></span>
+                <span>正常</span>
+              </span>
+              <span class="flex items-center gap-2">
+                <span class="status-dot bg-warning"></span>
+                <span>3</span>
+              </span>
+              <span class="flex items-center gap-2">
+                <span class="status-dot bg-danger"></span>
+                <span>0</span>
+              </span>
+            </span>
+          </div>
+          
+          <!-- 实时时钟 -->
+          <div class="hidden md:flex status-item">
+            <span class="status-text">系统时间：</span>
+            <span id="realtime-clock" class="realtime-clock font-mono status-value"></span>
+          </div>
+          
+          <button id="menu-btn" class="lg:hidden text-2xl text-primary">
+            <i class="fa fa-bars"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- 移动端导航菜单 -->
+    <div class="mobile-nav" id="mobile-nav">
+      <a href="#home" class="hover:text-primary transition-colors duration-300">运营总览</a>
+      <a href="#monitor" class="hover:text-primary transition-colors duration-300">实时监控</a>
+      <a href="#dispatch" class="hover:text-primary transition-colors duration-300">智能调度</a>
+      <a href="#decision" class="hover:text-primary transition-colors duration-300">AI决策分析</a>
+      <a href="#manage" class="hover:text-primary transition-colors duration-300">系统管理</a>
+    </div>
+  </header>
+
+  <!-- 英雄区（重新设计：总中心+多城市板块） -->
+  <section id="home" class="relative z-10 min-h-screen flex flex-col justify-between" style="background-image: url('https://picsum.photos/id/1076/1920/1080');">
+    <!-- 渐变遮罩 -->
+    <div class="absolute inset-0 bg-gradient-to-b from-dark/80 via-dark/90 to-dark z-10"></div>
+    
+    <!-- 顶部内容区 -->
+    <div class="container mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-16 relative z-20">
+      <div id="hero-content" class="max-w-7xl opacity-100 mx-auto">
+        <h1 class="text-[clamp(3rem,8vw,5rem)] font-extrabold font-display leading-tight text-shadow-lg mb-6 text-center">
+          智慧城市<span class="text-aiPurple">AI</span>运营总中心
+        </h1>
+        <p class="text-[clamp(1.2rem,3vw,1.6rem)] text-white/90 leading-relaxed mb-12 max-w-4xl mx-auto text-center">
+          基于城市大模型 · 全域数据智能分析 · AI驱动决策协同
+        </p>
+        
+        <!-- 总中心核心指标 + AI城市健康指数 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-6 mb-16">
+          <div class="data-panel p-6 count-item tech-line-bg">
+            <div class="panel-content">
+              <p class="text-white/70 text-sm mb-2">接入城市数量</p>
+              <p class="text-4xl font-bold text-primary">13</p>
+              <p class="text-xs text-white/50 mt-1">个</p>
+              <div class="flex flex-wrap mt-3 gap-2">
+                <span class="data-tag bg-primary/20 text-primary">华东 5</span>
+                <span class="data-tag bg-success/20 text-success">华北 3</span>
+                <span class="data-tag bg-secondary/20 text-light">华南 5</span>
+              </div>
+            </div>
+          </div>
+          <div class="data-panel p-6 count-item tech-line-bg">
+            <div class="panel-content">
+              <p class="text-white/70 text-sm mb-2">接入感知设备</p>
+              <p class="text-4xl font-bold text-primary">128,769</p>
+              <p class="text-xs text-white/50 mt-1">台/套</p>
+              <div class="flex flex-wrap mt-3 gap-2">
+                <span class="data-tag bg-primary/20 text-primary">摄像头 68%</span>
+                <span class="data-tag bg-success/20 text-success">传感器 22%</span>
+                <span class="data-tag bg-secondary/20 text-light">其他 10%</span>
+              </div>
+            </div>
+          </div>
+          <div class="data-panel p-6 count-item tech-line-bg">
+            <div class="panel-content">
+              <p class="text-white/70 text-sm mb-2">AI日均数据处理</p>
+              <div class="ai-highlight">
+                <p class="text-4xl font-bold text-primary">8600+</p>
+                <p class="text-xs text-white/50 mt-1">万条 (AI处理率 98%)</p>
+              </div>
+              <div class="flex flex-wrap mt-3 gap-2">
+                <span class="data-tag bg-primary/20 text-primary">视频 45%</span>
+                <span class="data-tag bg-success/20 text-success">传感器 35%</span>
+                <span class="data-tag bg-secondary/20 text-light">业务 20%</span>
+              </div>
+            </div>
+          </div>
+          <div class="data-panel p-6 count-item tech-line-bg">
+            <div class="panel-content">
+              <p class="text-white/70 text-sm mb-2">AI智能调度事件</p>
+              <div class="ai-highlight">
+                <p class="text-4xl font-bold text-primary">1,247</p>
+                <p class="text-xs text-white/50 mt-1">件/月 (AI自动调度 89%)</p>
+              </div>
+              <div class="flex flex-wrap mt-3 gap-2">
+                <span class="data-tag bg-primary/20 text-primary">交通 38%</span>
+                <span class="data-tag bg-danger/20 text-danger">应急 25%</span>
+                <span class="data-tag bg-success/20 text-success">民生 37%</span>
+              </div>
+            </div>
+          </div>
+          <!-- AI城市健康指数面板 - 增强版 -->
+          <div class="data-panel ai-panel p-6 count-item tech-line-bg tech-line-ai">
+            <div class="panel-content">
+              <div class="flex items-center gap-2 mb-2">
+                <i class="fa fa-brain text-aiPurple ai-pulse text-xl"></i>
+                <p class="text-white/70 text-sm font-medium">城市AI健康指数</p>
+              </div>
+              <p class="text-5xl font-bold text-aiPurple ai-pulse">92.8</p>
+              <p class="text-xs text-white/50 mt-1">/ 100 分 (AI综合评估)</p>
+              <div class="flex flex-wrap mt-3 gap-2">
+                <span class="data-tag bg-aiPurple/20 text-aiPurple">AI大模型 v4.2</span>
+                <span class="data-tag bg-success/20 text-success">优秀</span>
+                <span class="data-tag bg-secondary/20 text-light">1分钟前更新</span>
+              </div>
+              <div class="mt-4 flex items-center text-xs text-white/70 flex-wrap gap-2">
+                <span>AI评估维度：</span>
+                <span class="flex items-center">安全 
+                  <span class="w-16 h-1 bg-gray-700 rounded-full mx-2 overflow-hidden">
+                    <span class="block h-full bg-success w-[95%]"></span>
+                  </span>
+                </span>
+                <span class="flex items-center">交通 
+                  <span class="w-16 h-1 bg-gray-700 rounded-full mx-2 overflow-hidden">
+                    <span class="block h-full bg-success w-[88%]"></span>
+                  </span>
+                </span>
+                <span class="flex items-center">环境 
+                  <span class="w-16 h-1 bg-gray-700 rounded-full mx-2 overflow-hidden">
+                    <span class="block h-full bg-success w-[94%]"></span>
+                  </span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 城市板块选择区（核心修改：新增香港并居中） -->
+        <div class="mb-8">
+          <h2 class="text-2xl font-bold mb-8 text-center">已接入<span class="text-aiPurple">AI</span>运营中心的城市</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 max-w-6xl mx-auto">
+            <!-- 上海（总中心） -->
+            <div class="city-card active p-6 h-48 flex flex-col justify-between">
+              <div class="relative z-10">
+                <h3 class="text-xl font-bold text-primary mb-2">上海运营总中心</h3>
+                <div class="flex items-center text-sm text-white/70">
+                  <span class="status-dot bg-primary mr-2"></span>
+                  <span>AI引擎在线运行中</span>
+                </div>
+              </div>
+              <div class="relative z-10 flex justify-between items-center mt-4">
+                <span class="text-xs text-white/60">AI管辖：13个城市</span>
+                <button class="px-3 py-1 bg-primary/20 hover:bg-primary/40 text-primary text-xs rounded-lg transition-colors">
+                  <i class="fa fa-brain mr-1"></i>进入AI总控
+                </button>
+              </div>
+            </div>
+            
+            <!-- 北京 -->
+            <div class="city-card p-6 h-48 flex flex-col justify-between">
+              <div class="relative z-10">
+                <h3 class="text-xl font-bold text-light mb-2">北京AI运营中心</h3>
+                <div class="flex items-center text-sm text-white/70">
+                  <span class="status-dot bg-success mr-2"></span>
+                  <span>AI引擎在线运行中</span>
+                </div>
+              </div>
+              <div class="relative z-10 flex justify-between items-center mt-4">
+                <span class="text-xs text-white/60">AI接入：15,892台设备</span>
+                <button class="px-3 py-1 bg-primary/10 hover:bg-primary/30 text-primary text-xs rounded-lg transition-colors">
+                  <i class="fa fa-brain mr-1"></i>AI分析
+                </button>
+              </div>
+            </div>
+            
+            <!-- 广州 -->
+            <div class="city-card p-6 h-48 flex flex-col justify-between">
+              <div class="relative z-10">
+                <h3 class="text-xl font-bold text-light mb-2">广州AI运营中心</h3>
+                <div class="flex items-center text-sm text-white/70">
+                  <span class="status-dot bg-success mr-2"></span>
+                  <span>AI引擎在线运行中</span>
+                </div>
+              </div>
+              <div class="relative z-10 flex justify-between items-center mt-4">
+                <span class="text-xs text-white/60">AI接入：12,458台设备</span>
+                <button class="px-3 py-1 bg-primary/10 hover:bg-primary/30 text-primary text-xs rounded-lg transition-colors">
+                  <i class="fa fa-brain mr-1"></i>AI分析
+                </button>
+              </div>
+            </div>
+            
+            <!-- 深圳 -->
+            <div class="city-card p-6 h-48 flex flex-col justify-between">
+              <div class="relative z-10">
+                <h3 class="text-xl font-bold text-light mb-2">深圳AI运营中心</h3>
+                <div class="flex items-center text-sm text-white/70">
+                  <span class="status-dot bg-warning mr-2"></span>
+                  <span>AI预警状态</span>
+                </div>
+              </div>
+              <div class="relative z-10 flex justify-between items-center mt-4">
+                <span class="text-xs text-white/60">AI接入：18,765台设备</span>
+                <button class="px-3 py-1 bg-warning/20 hover:bg-warning/40 text-warning text-xs rounded-lg transition-colors">
+                  <i class="fa fa-exclamation-triangle mr-1"></i>AI处理预警
+                </button>
+              </div>
+            </div>
+            
+            <!-- 香港 -->
+            <div class="city-card p-6 h-48 flex flex-col justify-between">
+              <div class="relative z-10">
+                <h3 class="text-xl font-bold text-light mb-2">香港AI运营中心</h3>
+                <div class="flex items-center text-sm text-white/70">
+                  <span class="status-dot bg-primary mr-2"></span>
+                  <span>AI新接入运行</span>
+                </div>
+              </div>
+              <div class="relative z-10 flex justify-between items-center mt-4">
+                <span class="text-xs text-white/60">AI接入：9,247台设备</span>
+                <button class="px-3 py-1 bg-primary/10 hover:bg-primary/30 text-primary text-xs rounded-lg transition-colors">
+                  <i class="fa fa-brain mr-1"></i>AI分析
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 更多城市按钮 -->
+          <div class="text-center mt-8">
+            <button class="px-8 py-3 border border-primary/50 text-primary hover:bg-primary/10 rounded-full transition-colors flex items-center mx-auto">
+              <i class="fa fa-plus mr-2"></i>查看全部13个城市AI运营中心
+            </button>
+          </div>
+        </div>
+        
+        <!-- 运营中心操作按钮 - 增强AI -->
+        <div class="flex flex-col sm:flex-row gap-6 justify-center">
+          <a href="#monitor" class="px-10 py-4 bg-primary text-dark font-semibold rounded-full text-center text-lg hover:bg-primaryDark transition-colors shadow-lg w-fit">
+            <i class="fa fa-eye mr-2"></i>AI全域实时监控
+          </a>
+          <a href="#dispatch" class="px-10 py-4 border-2 border-primary text-primary font-semibold rounded-full text-center text-lg hover:bg-primary/10 transition-colors shadow-lg w-fit">
+            <i class="fa fa-brain mr-2"></i>AI跨城智能调度
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 底部装饰层 -->
+    <div class="hero-decoration"></div>
+  </section>
+
+  <!-- 全域实时监控模块（运营中心核心）- 增强AI -->
+  <section id="monitor" class="section-padding bg-dark relative z-10">
+    <div class="container mx-auto px-6 md:px-12 lg:px-20">
+      <div class="text-center max-w-4xl mx-auto mb-16">
+        <h2 class="text-[clamp(2rem,5vw,3.5rem)] font-bold font-display mb-6">AI全域实时监控</h2>
+        <p class="text-xl text-white/80 leading-relaxed">
+          AI智能识别 · 异常自动告警 · 7×24小时不间断监控分析
+        </p>
+      </div>
+      
+      <!-- 监控面板布局（运营中心风格）- 每个面板添加不同的科技线条背景 -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- 交通运行监控面板 - AI增强 -->
+        <div class="data-panel p-6 panel-elevation h-[420px] tech-line-bg tech-line-traffic">
+          <div class="panel-content">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-xl font-bold text-primary">AI交通运行分析</h3>
+              <span class="text-xs bg-success/20 text-success px-3 py-1 rounded-full flex items-center gap-1">
+                <i class="fa fa-brain text-aiPurple"></i>实时AI分析
+              </span>
+            </div>
+            
+            <!-- 关键指标 - AI增强 -->
+            <div class="flex flex-wrap gap-3 mb-4">
+              <div class="mini-stat">
+                <span class="text-white/70">高峰时段：</span>
+                <span class="text-primary font-medium">07:00-09:00</span>
+              </div>
+              <div class="mini-stat">
+                <span class="text-white/70">AI预测拥堵点：</span>
+                <span class="text-warning font-medium">3处</span>
+              </div>
+              <div class="mini-stat ai-highlight">
+                <span class="text-white/70">AI优化建议：</span>
+                <span class="text-aiPurple font-medium">已生成</span>
+              </div>
+            </div>
+            
+            <!-- 图表区域 - 修复高度问题 -->
+            <div id="traffic-chart" class="chart-container w-full mb-4"></div>
+            
+            <!-- 操作按钮 - AI增强 -->
+            <div class="flex gap-3 mt-auto">
+              <button class="flex-1 py-2 bg-primary/10 hover:bg-primary/20 text-primary text-sm rounded-lg transition-colors flex items-center justify-center">
+                <i class="fa fa-refresh mr-1"></i> AI刷新数据
+              </button>
+              <button class="flex-1 py-2 bg-aiPurple/20 hover:bg-aiPurple/30 text-aiPurple text-sm rounded-lg transition-colors flex items-center justify-center">
+                <i class="fa fa-brain mr-1"></i> AI深度分析
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 公共安全监控面板 - AI增强 -->
+        <div class="data-panel p-6 panel-elevation h-[420px] tech-line-bg tech-line-security">
+          <div class="panel-content">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-xl font-bold text-primary">AI公共安全分析</h3>
+              <span class="text-xs bg-success/20 text-success px-3 py-1 rounded-full flex items-center gap-1">
+                <i class="fa fa-brain text-aiPurple"></i>实时AI分析
+              </span>
+            </div>
+            
+            <!-- 关键指标 - AI增强 -->
+            <div class="flex flex-wrap gap-3 mb-4">
+              <div class="mini-stat">
+                <span class="text-white/70">AI识别异常：</span>
+                <span class="text-warning font-medium">12起</span>
+              </div>
+              <div class="mini-stat">
+                <span class="text-white/70">AI自动告警：</span>
+                <span class="text-light font-medium">5起 (已处理)</span>
+              </div>
+              <div class="mini-stat ai-highlight">
+                <span class="text-white/70">AI破案率：</span>
+                <span class="text-aiPurple font-medium">87%</span>
+              </div>
+            </div>
+            
+            <!-- 图表区域 - 修复高度问题 -->
+            <div id="security-chart" class="chart-container w-full mb-4"></div>
+            
+            <!-- 操作按钮 - AI增强 -->
+            <div class="flex gap-3 mt-auto">
+              <button class="flex-1 py-2 bg-primary/10 hover:bg-primary/20 text-primary text-sm rounded-lg transition-colors flex items-center justify-center">
+                <i class="fa fa-refresh mr-1"></i> AI刷新数据
+              </button>
+              <button class="flex-1 py-2 bg-aiPurple/20 hover:bg-aiPurple/30 text-aiPurple text-sm rounded-lg transition-colors flex items-center justify-center">
+                <i class="fa fa-brain mr-1"></i> AI风险预测
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 生态环境监控面板 - AI增强 -->
+        <div class="data-panel p-6 panel-elevation h-[420px] tech-line-bg tech-line-environment">
+          <div class="panel-content">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-xl font-bold text-primary">AI生态环境分析</h3>
+              <span class="text-xs bg-success/20 text-success px-3 py-1 rounded-full flex items-center gap-1">
+                <i class="fa fa-brain text-aiPurple"></i>实时AI分析
+              </span>
+            </div>
+            
+            <!-- 关键指标 - AI增强 -->
+            <div class="flex flex-wrap gap-3 mb-4">
+              <div class="mini-stat">
+                <span class="text-white/70">空气质量：</span>
+                <span class="text-success font-medium">优 (AQI: 28)</span>
+              </div>
+              <div class="mini-stat">
+                <span class="text-white/70">AI预测未来24h：</span>
+                <span class="text-light font-medium">良好</span>
+              </div>
+              <div class="mini-stat ai-highlight">
+                <span class="text-white/70">AI污染源定位：</span>
+                <span class="text-aiPurple font-medium">0处</span>
+              </div>
+            </div>
+            
+            <!-- 图表区域 - 修复高度问题 -->
+            <div id="environment-chart" class="chart-container w-full mb-4"></div>
+            
+            <!-- 操作按钮 - AI增强 -->
+            <div class="flex gap-3 mt-auto">
+              <button class="flex-1 py-2 bg-primary/10 hover:bg-primary/20 text-primary text-sm rounded-lg transition-colors flex items-center justify-center">
+                <i class="fa fa-refresh mr-1"></i> AI刷新数据
+              </button>
+              <button class="flex-1 py-2 bg-aiPurple/20 hover:bg-aiPurple/30 text-aiPurple text-sm rounded-lg transition-colors flex items-center justify-center">
+                <i class="fa fa-brain mr-1"></i> AI趋势预测
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 政务服务监控面板 - AI增强 -->
+        <div class="data-panel p-6 panel-elevation h-[420px] tech-line-bg tech-line-government">
+          <div class="panel-content">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-xl font-bold text-primary">AI政务服务分析</h3>
+              <span class="text-xs bg-success/20 text-success px-3 py-1 rounded-full flex items-center gap-1">
+                <i class="fa fa-brain text-aiPurple"></i>实时AI分析
+              </span>
+            </div>
+            
+            <!-- 关键指标 - AI增强 -->
+            <div class="flex flex-wrap gap-3 mb-4">
+              <div class="mini-stat">
+                <span class="text-white/70">AI智能办理率：</span>
+                <span class="text-primary font-medium">78% (+5%)</span>
+              </div>
+              <div class="mini-stat">
+                <span class="text-white/70">AI客服响应：</span>
+                <span class="text-light font-medium">98.5%</span>
+              </div>
+              <div class="mini-stat ai-highlight">
+                <span class="text-white/70">AI满意度：</span>
+                <span class="text-aiPurple font-medium">96.2%</span>
+              </div>
+            </div>
+            
+            <!-- 图表区域 - 修复高度问题 -->
+            <div id="government-chart" class="chart-container w-full mb-4"></div>
+            
+            <!-- 操作按钮 - AI增强 -->
+            <div class="flex gap-3 mt-auto">
+              <button class="flex-1 py-2 bg-primary/10 hover:bg-primary/20 text-primary text-sm rounded-lg transition-colors flex items-center justify-center">
+                <i class="fa fa-refresh mr-1"></i> AI刷新数据
+              </button>
+              <button class="flex-1 py-2 bg-aiPurple/20 hover:bg-aiPurple/30 text-aiPurple text-sm rounded-lg transition-colors flex items-center justify-center">
+                <i class="fa fa-brain mr-1"></i> AI智能客服
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 智能调度指挥模块（运营中心核心）- 增强AI -->
+  <section id="dispatch" class="section-padding bg-gradient-command relative z-10">
+    <div class="container mx-auto px-6 md:px-12 lg:px-20">
+      <div class="text-center max-w-4xl mx-auto mb-16">
+        <h2 class="text-[clamp(2rem,5vw,3.5rem)] font-bold font-display mb-6">AI智能调度指挥</h2>
+        <p class="text-xl text-white/80 leading-relaxed">
+          城市大模型驱动 · AI智能资源匹配 · 毫秒级应急响应
+        </p>
+      </div>
+      
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- 事件处理流程 - AI增强 -->
+        <div class="data-panel p-6 panel-elevation tech-line-bg tech-line-dispatch" style="min-height: 400px;">
+          <div class="panel-content">
+            <h3 class="text-xl font-bold text-primary">AI事件处理流程</h3>
+            
+            <!-- 状态指标 - AI增强 -->
+            <div class="flex flex-wrap gap-2 mb-4">
+              <span class="data-tag bg-primary/20 text-primary">AI调度提升 45%</span>
+              <span class="data-tag bg-warning/20 text-warning">AI识别紧急事件 2件</span>
+              <span class="data-tag bg-aiPurple/20 text-aiPurple ai-prediction-tag">AI自动调度率 89%</span>
+            </div>
+            
+            <div id="process-chart" class="chart-container w-full mb-4"></div>
+            
+            <!-- 操作按钮 - AI增强 -->
+            <div class="flex gap-3 mt-auto">
+              <button class="flex-1 py-2 bg-primary hover:bg-primaryDark text-dark text-sm rounded-lg transition-colors flex items-center justify-center">
+                <i class="fa fa-brain mr-1"></i> AI立即调度
+              </button>
+              <button class="flex-1 py-2 bg-secondary/30 hover:bg-secondary/50 text-light text-sm rounded-lg transition-colors flex items-center justify-center">
+                <i class="fa fa-map-marker mr-1"></i> AI跟踪进度
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 事件处理状态 - AI增强 -->
+        <div class="data-panel p-6 panel-elevation tech-line-bg tech-line-dispatch" style="min-height: 400px;">
+          <div class="panel-content">
+            <h3 class="text-xl font-bold text-primary">AI事件处理状态</h3>
+            
+            <!-- 高优先级标签 - AI增强 -->
+            <div class="mb-4">
+              <span class="data-tag bg-danger/20 text-danger">AI识别高优先级：5件</span>
+              <span class="data-tag bg-secondary/20 text-light">AI识别中等优先级：12件</span>
+              <span class="data-tag bg-success/20 text-success">AI识别低优先级：8件</span>
+            </div>
+            
+            <div class="grid grid-cols-3 gap-4 mb-4">
+              <div class="text-center">
+                <p class="text-white/70 text-sm mb-2">AI待处理</p>
+                <p class="text-3xl font-bold text-warning">17</p>
+              </div>
+              <div class="text-center">
+                <p class="text-white/70 text-sm mb-2">AI处理中</p>
+                <p class="text-3xl font-bold text-primary">8</p>
+              </div>
+              <div class="text-center">
+                <p class="text-white/70 text-sm mb-2">AI已完成</p>
+                <p class="text-3xl font-bold text-success">246</p>
+              </div>
+            </div>
+            
+            <div id="status-chart" class="chart-container w-full mb-4"></div>
+            
+            <!-- 操作按钮 - AI增强 -->
+            <div class="flex gap-3 mt-auto">
+              <button class="flex-1 py-2 bg-primary/10 hover:bg-primary/20 text-primary text-sm rounded-lg transition-colors flex items-center justify-center">
+                <i class="fa fa-brain mr-1"></i> AI智能指派
+              </button>
+              <button class="flex-1 py-2 bg-secondary/30 hover:bg-secondary/50 text-light text-sm rounded-lg transition-colors flex items-center justify-center">
+                <i class="fa fa-bar-chart mr-1"></i> AI统计分析
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 调度效率分析 - AI增强 -->
+        <div class="data-panel p-6 panel-elevation tech-line-bg tech-line-dispatch" style="min-height: 400px;">
+          <div class="panel-content">
+            <h3 class="text-xl font-bold text-primary">AI平均响应时长</h3>
+            
+            <!-- 效率指标 - AI增强 -->
+            <div class="flex flex-wrap gap-2 mb-2">
+              <span class="data-tag bg-primary/20 text-primary">AI目标：≤10分钟</span>
+              <span class="data-tag bg-success/20 text-success">AI达标率 96%</span>
+              <span class="data-tag bg-aiPurple/20 text-aiPurple ai-prediction-tag">AI最优：3分钟</span>
+            </div>
+            
+            <div class="text-center mb-4">
+              <p class="text-6xl font-bold text-primary">8<span class="text-3xl ml-2">分钟</span></p>
+              <p class="text-white/70 text-sm mt-2">AI调度较传统模式提升 68%</p>
+            </div>
+            
+            <div id="efficiency-chart" class="chart-container w-full mb-4"></div>
+            
+            <!-- 操作按钮 - AI增强 -->
+            <div class="flex gap-3 mt-auto">
+              <button class="flex-1 py-2 bg-primary/10 hover:bg-primary/20 text-primary text-sm rounded-lg transition-colors flex items-center justify-center">
+                <i class="fa fa-line-chart mr-1"></i> AI趋势分析
+              </button>
+              <button class="flex-1 py-2 bg-aiPurple/20 hover:bg-aiPurple/30 text-aiPurple text-sm rounded-lg transition-colors flex items-center justify-center">
+                <i class="fa fa-brain mr-1"></i> AI优化策略
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 数据驱动决策模块（运营中心核心）- 增强AI -->
+  <section id="decision" class="section-padding bg-dark relative z-10">
+    <div class="container mx-auto px-6 md:px-12 lg:px-20">
+      <div class="text-center max-w-4xl mx-auto mb-16">
+        <h2 class="text-[clamp(2rem,5vw,3.5rem)] font-bold font-display mb-6">AI数据驱动决策</h2>
+        <p class="text-xl text-white/80 leading-relaxed">
+          城市大模型深度分析 · AI智能预测 · 前瞻性决策支持
+        </p>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- AI决策分析面板 - 增强版 -->
+        <div class="data-panel ai-panel p-6 panel-elevation h-[420px] tech-line-bg tech-line-ai">
+          <div class="panel-content">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-xl font-bold text-aiPurple">城市大模型AI决策</h3>
+              <span class="text-xs bg-aiPurple/20 text-aiPurple px-3 py-1 rounded-full flex items-center gap-1">
+                <span class="ai-thinking"><span></span><span></span><span></span></span>
+                AI分析中
+              </span>
+            </div>
+            
+            <!-- 关键指标 - AI增强 -->
+            <div class="flex flex-wrap gap-3 mb-4">
+              <div class="mini-stat bg-aiPurple/10">
+                <span class="text-white/70">AI决策准确率：</span>
+                <span class="text-aiPurple font-medium">92.5%</span>
+              </div>
+              <div class="mini-stat bg-aiPurple/10">
+                <span class="text-white/70">AI预测准确率：</span>
+                <span class="text-aiPurple font-medium">88.7%</span>
+              </div>
+              <div class="mini-stat bg-aiPurple/10 ai-highlight">
+                <span class="text-white/70">AI模型版本：</span>
+                <span class="text-aiPurple font-medium">v4.2 (最新)</span>
+              </div>
+            </div>
+            
+            <!-- 图表区域 -->
+            <div id="ai-decision-chart" class="chart-container w-full mb-4"></div>
+            
+            <!-- 操作按钮 - AI增强 -->
+            <div class="flex gap-3 mt-auto">
+              <button class="flex-1 py-2 bg-aiPurple/20 hover:bg-aiPurple/30 text-aiPurple text-sm rounded-lg transition-colors flex items-center justify-center">
+                <i class="fa fa-brain mr-1"></i> AI重新分析
+              </button>
+              <button class="flex-1 py-2 bg-secondary/30 hover:bg-secondary/50 text-light text-sm rounded-lg transition-colors flex items-center justify-center">
+                <i class="fa fa-file-text mr-1"></i> AI生成报告
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 城市趋势预测面板 - AI增强 -->
+        <div class="data-panel p-6 panel-elevation h-[420px] tech-line-bg tech-line-decision">
+          <div class="panel-content">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-xl font-bold text-primary">AI城市趋势预测</h3>
+              <span class="text-xs bg-success/20 text-success px-3 py-1 rounded-full flex items-center gap-1">
+                <i class="fa fa-brain text-aiPurple"></i>未来7天
+              </span>
+            </div>
+            
+            <!-- 关键指标 - AI增强 -->
+            <div class="flex flex-wrap gap-3 mb-4">
+              <div class="mini-stat">
+                <span class="text-white/70">AI交通压力预测：</span>
+                <span class="text-warning font-medium">中等 (↑12%)</span>
+              </div>
+              <div class="mini-stat">
+                <span class="text-white/70">AI环境指数预测：</span>
+                <span class="text-success font-medium">良好 (↓3%)</span>
+              </div>
+              <div class="mini-stat ai-highlight">
+                <span class="text-white/70">AI事件预测：</span>
+                <span class="text-aiPurple font-medium">18件 (精准率89%)</span>
+              </div>
+            </div>
+            
+            <!-- 图表区域 -->
+            <div id="trend-chart" class="chart-container w-full mb-4"></div>
+            
+            <!-- 操作按钮 - AI增强 -->
+            <div class="flex gap-3 mt-auto">
+              <button class="flex-1 py-2 bg-primary/10 hover:bg-primary/20 text-primary text-sm rounded-lg transition-colors flex items-center justify-center">
+                <i class="fa fa-refresh mr-1"></i> AI更新预测
+              </button>
+              <button class="flex-1 py-2 bg-aiPurple/20 hover:bg-aiPurple/30 text-aiPurple text-sm rounded-lg transition-colors flex items-center justify-center">
+                <i class="fa fa-brain mr-1"></i> AI深度预测
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 系统管理模块 - 增强AI -->
+  <section id="manage" class="section-padding bg-gradient-command relative z-10 pb-20">
+    <div class="container mx-auto px-6 md:px-12 lg:px-20">
+      <div class="text-center max-w-4xl mx-auto mb-16">
+        <h2 class="text-[clamp(2rem,5vw,3.5rem)] font-bold font-display mb-6">AI系统管理</h2>
+        <p class="text-xl text-white/80 leading-relaxed">
+          AI智能运维 · 自动故障检测 · 7×24小时系统保障
+        </p>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- 系统状态监控 - AI增强 -->
+        <div class="data-panel p-6 panel-elevation tech-line-bg">
+          <div class="panel-content">
+            <h3 class="text-xl font-bold text-primary mb-4">AI系统状态监控</h3>
+            
+            <div class="space-y-4 mb-6">
+              <div>
+                <div class="flex justify-between text-sm mb-1">
+                  <span class="text-white/70">AI服务器负载</span>
+                  <span class="text-primary">45%</span>
+                </div>
+                <div class="w-full h-2 bg-gray-700 rounded-full overflow-hidden">
+                  <div class="h-full bg-primary w-[45%]"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm mb-1">
+                  <span class="text-white/70">AI数据库使用率</span>
+                  <span class="text-primary">68%</span>
+                </div>
+                <div class="w-full h-2 bg-gray-700 rounded-full overflow-hidden">
+                  <div class="h-full bg-primary w-[68%]"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm mb-1">
+                  <span class="text-white/70">AI网络带宽</span>
+                  <span class="text-success">32%</span>
+                </div>
+                <div class="w-full h-2 bg-gray-700 rounded-full overflow-hidden">
+                  <div class="h-full bg-success w-[32%]"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm mb-1">
+                  <span class="text-white/70">AI设备在线率</span>
+                  <span class="text-success">99.2%</span>
+                </div>
+                <div class="w-full h-2 bg-gray-700 rounded-full overflow-hidden">
+                  <div class="h-full bg-success w-[99.2%]"></div>
+                </div>
+              </div>
+              <div class="ai-highlight">
+                <div class="flex justify-between text-sm mb-1">
+                  <span class="text-white/70">AI故障预测率</span>
+                  <span class="text-aiPurple">98.7%</span>
+                </div>
+                <div class="w-full h-2 bg-gray-700 rounded-full overflow-hidden">
+                  <div class="h-full bg-aiPurple w-[98.7%]"></div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="flex gap-3 mt-auto">
+              <button class="flex-1 py-2 bg-primary/10 hover:bg-primary/20 text-primary text-sm rounded-lg transition-colors flex items-center justify-center">
+                <i class="fa fa-cog mr-1"></i> AI系统配置
+              </button>
+              <button class="flex-1 py-2 bg-aiPurple/20 hover:bg-aiPurple/30 text-aiPurple text-sm rounded-lg transition-colors flex items-center justify-center">
+                <i class="fa fa-bell mr-1"></i> AI告警设置
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 用户权限管理 - AI增强 -->
+        <div class="data-panel p-6 panel-elevation tech-line-bg">
+          <div class="panel-content">
+            <h3 class="text-xl font-bold text-primary mb-4">AI用户权限管理</h3>
+            
+            <div class="space-y-3 mb-6">
+              <div class="flex items-center justify-between p-3 bg-secondary/20 rounded-lg">
+                <div class="flex items-center">
+                  <div class="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center mr-3">
+                    <i class="fa fa-user text-primary"></i>
+                  </div>
+                  <div>
+                    <p class="font-medium">AI系统管理员</p>
+                    <p class="text-xs text-white/60">admin@scocai.cn</p>
+                  </div>
+                </div>
+                <span class="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full">AI超级权限</span>
+              </div>
+              <div class="flex items-center justify-between p-3 bg-secondary/20 rounded-lg">
+                <div class="flex items-center">
+                  <div class="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center mr-3">
+                    <i class="fa fa-user text-primary"></i>
+                  </div>
+                  <div>
+                    <p class="font-medium">AI运营监控员</p>
+                    <p class="text-xs text-white/60">monitor@scocai.cn</p>
+                  </div>
+                </div>
+                <span class="text-xs bg-success/20 text-success px-2 py-1 rounded-full">AI查看权限</span>
+              </div>
+              <div class="flex items-center justify-between p-3 bg-secondary/20 rounded-lg">
+                <div class="flex items-center">
+                  <div class="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center mr-3">
+                    <i class="fa fa-user text-primary"></i>
+                  </div>
+                  <div>
+                    <p class="font-medium">AI调度操作员</p>
+                    <p class="text-xs text-white/60">dispatch@scocai.cn</p>
+                  </div>
+                </div>
+                <span class="text-xs bg-warning/20 text-warning px-2 py-1 rounded-full">AI操作权限</span>
+              </div>
+            </div>
+            
+            <div class="flex gap-3 mt-auto">
+              <button class="flex-1 py-2 bg-primary/10 hover:bg-primary/20 text-primary text-sm rounded-lg transition-colors flex items-center justify-center">
+                <i class="fa fa-plus mr-1"></i> AI添加用户
+              </button>
+              <button class="flex-1 py-2 bg-aiPurple/20 hover:bg-aiPurple/30 text-aiPurple text-sm rounded-lg transition-colors flex items-center justify-center">
+                <i class="fa fa-key mr-1"></i> AI权限配置
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 系统日志审计 - AI增强 -->
+        <div class="data-panel p-6 panel-elevation tech-line-bg">
+          <div class="panel-content">
+            <h3 class="text-xl font-bold text-primary mb-4">AI操作日志审计</h3>
+            
+            <div class="space-y-2 mb-6 text-sm">
+              <div class="flex justify-between items-center p-2 border-b border-gray-700/50">
+                <span class="text-white/80 flex items-center gap-2">
+                  <i class="fa fa-brain text-aiPurple"></i>
+                  AI系统管理员登录
+                </span>
+                <span class="text-white/60">10:23:45</span>
+              </div>
+              <div class="flex justify-between items-center p-2 border-b border-gray-700/50">
+                <span class="text-white/80 flex items-center gap-2">
+                  <i class="fa fa-brain text-aiPurple"></i>
+                  AI数据报表导出
+                </span>
+                <span class="text-white/60">09:45:12</span>
+              </div>
+              <div class="flex justify-between items-center p-2 border-b border-gray-700/50">
+                <span class="text-white/80 flex items-center gap-2">
+                  <i class="fa fa-brain text-aiPurple"></i>
+                  AI智能调度执行
+                </span>
+                <span class="text-white/60">08:12:34</span>
+              </div>
+              <div class="flex justify-between items-center p-2 border-b border-gray-700/50">
+                <span class="text-white/80 flex items-center gap-2">
+                  <i class="fa fa-brain text-aiPurple"></i>
+                  AI系统配置更新
+                </span>
+                <span class="text-white/60">07:58:19</span>
+              </div>
+              <div class="flex justify-between items-center p-2">
+                <span class="text-white/80 flex items-center gap-2">
+                  <i class="fa fa-brain text-aiPurple"></i>
+                  AI数据库备份完成
+                </span>
+                <span class="text-white/60">00:05:22</span>
+              </div>
+            </div>
+            
+            <div class="flex gap-3 mt-auto">
+              <button class="flex-1 py-2 bg-primary/10 hover:bg-primary/20 text-primary text-sm rounded-lg transition-colors flex items-center justify-center">
+                <i class="fa fa-search mr-1"></i> AI日志查询
+              </button>
+              <button class="flex-1 py-2 bg-aiPurple/20 hover:bg-aiPurple/30 text-aiPurple text-sm rounded-lg transition-colors flex items-center justify-center">
+                <i class="fa fa-download mr-1"></i> AI导出日志
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 底部版权信息 - 增强AI -->
+      <div class="mt-16 text-center text-white/60 text-sm">
+        <p>© 2026 SCOC<span class="text-aiPurple">AI</span> 智慧城市AI运营管理中心 版权所有</p>
+        <p class="mt-2">技术支持：城市大模型研究院 | AI引擎版本：v4.2 | 数据安全等级：三级等保</p><p style="margin-top: 1.15rem; font-size: 0.91rem;">本页面仅用于域名展示，不构成任何商业承诺。购买域名：<a href="mailto:ai@altoai.cn?subject=咨询域名转让事宜" style="text-decoration: none">
+<font color="#FF0000">ai@altoai.cn</font></a></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI语音助手入口 -->
+  <div class="ai-assistant" id="ai-assistant-btn">
+    <i class="fa fa-microphone"></i>
+  </div>
+  
+  <!-- AI对话面板 -->
+  <div class="ai-chat-panel" id="ai-chat-panel">
+    <div class="chat-header">
+      <div class="flex items-center gap-2">
+        <i class="fa fa-brain text-aiPurple"></i>
+        <span class="font-medium">城市AI助手</span>
+      </div>
+      <button id="close-chat-btn" class="text-white/70 hover:text-white">
+        <i class="fa fa-times"></i>
+      </button>
+    </div>
+    <div class="chat-messages" id="chat-messages">
+      <div class="chat-message ai">
+        您好！我是城市AI助手，请问有什么可以帮助您的？（注意本站为域名概念展示站，无实际功能。购买本域名请联系ai@altoai.cn）<br>
+        <span class="text-xs text-white/60 mt-1 block">支持查询：城市数据、交通状况、事件调度、AI分析报告等</span>
+      </div>
+    </div>
+    <div class="chat-input">
+      <input type="text" id="chat-input" placeholder="请输入您的问题..." autocomplete="off">
+      <button id="send-chat-btn">
+        <i class="fa fa-paper-plane"></i>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // 实时时钟更新
+    function updateClock() {
+      const now = new Date();
+      const timeString = now.toLocaleTimeString('zh-CN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      });
+      const dateString = now.toLocaleDateString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+      document.getElementById('realtime-clock').textContent = `${dateString} ${timeString}`;
+    }
+    
+    // 初始化时钟并每秒更新
+    updateClock();
+    setInterval(updateClock, 1000);
+    
+    // 移动端菜单切换
+    const menuBtn = document.getElementById('menu-btn');
+    const mobileNav = document.getElementById('mobile-nav');
+    const overlay = document.getElementById('overlay');
+    
+    menuBtn.addEventListener('click', () => {
+      mobileNav.classList.toggle('show');
+      overlay.classList.toggle('show');
+      document.body.style.overflow = mobileNav.classList.contains('show') ? 'hidden' : '';
+    });
+    
+    overlay.addEventListener('click', () => {
+      mobileNav.classList.remove('show');
+      overlay.classList.remove('show');
+      document.body.style.overflow = '';
+    });
+    
+    // AI助手聊天功能
+    const aiAssistantBtn = document.getElementById('ai-assistant-btn');
+    const aiChatPanel = document.getElementById('ai-chat-panel');
+    const closeChatBtn = document.getElementById('close-chat-btn');
+    const chatMessages = document.getElementById('chat-messages');
+    const chatInput = document.getElementById('chat-input');
+    const sendChatBtn = document.getElementById('send-chat-btn');
+    
+    // 打开/关闭AI聊天面板
+    aiAssistantBtn.addEventListener('click', () => {
+      aiChatPanel.classList.toggle('show');
+    });
+    
+    closeChatBtn.addEventListener('click', () => {
+      aiChatPanel.classList.remove('show');
+    });
+    
+    // AI回复库
+    const aiResponses = {
+      '你好': '您好！我是城市AI助手，随时为您服务。（注意本站为域名概念展示站，无实际功能。购买本域名请联系ai@altoai.cn）',
+      '城市数据': '当前接入13个城市，共128,769台感知设备，AI日均处理数据8600万条。',
+      '交通状况': '当前交通高峰时段为07:00-09:00，AI预测有3处拥堵点，已生成优化建议。',
+      'AI指数': '当前城市AI健康指数为92.8分，安全95%、交通88%、环境94%。',
+      '响应时长': 'AI智能调度平均响应时长8分钟，较传统模式提升68%。',
+      '帮助': '我可以为您提供：\n1. 城市运营数据查询\n2. 交通/安全/环境实时分析\n3. AI决策建议\n4. 系统运行状态\n请说出您想查询的内容。',
+      '默认': '您的问题我已收到，正在通过城市大模型分析中...\n\n【AI分析结果】\n根据您的查询，我为您提供以下信息：\n• 如需具体数据，请说明查询维度（交通/安全/环境/政务）\n• 如需AI分析报告，请前往"AI决策分析"模块查看\n• 如需紧急调度，请使用"AI智能调度"功能'
+    };
+    
+    // 发送聊天消息
+    function sendMessage() {
+      const message = chatInput.value.trim();
+      if (!message) return;
+      
+      // 添加用户消息
+      const userMessage = document.createElement('div');
+      userMessage.className = 'chat-message user';
+      userMessage.textContent = message;
+      chatMessages.appendChild(userMessage);
+      
+      // 清空输入框
+      chatInput.value = '';
+      
+      // 滚动到底部
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      
+      // AI思考中
+      const thinkingMessage = document.createElement('div');
+      thinkingMessage.className = 'chat-message ai';
+      thinkingMessage.innerHTML = '<div class="ai-thinking"><span></span><span></span><span></span></div> AI正在分析您的问题...';
+      chatMessages.appendChild(thinkingMessage);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      
+      // 模拟AI回复延迟
+      setTimeout(() => {
+        // 删除思考中消息
+        chatMessages.removeChild(thinkingMessage);
+        
+        // 获取AI回复
+        let response = aiResponses['默认'];
+        Object.keys(aiResponses).forEach(key => {
+          if (message.includes(key) && key !== '默认') {
+            response = aiResponses[key];
+          }
+        });
+        
+        // 添加AI回复
+        const aiMessage = document.createElement('div');
+        aiMessage.className = 'chat-message ai';
+        aiMessage.innerHTML = response.replace(/\n/g, '<br>');
+        chatMessages.appendChild(aiMessage);
+        
+        // 滚动到底部
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+      }, 1500);
+    }
+    
+    // 绑定发送按钮事件
+    sendChatBtn.addEventListener('click', sendMessage);
+    chatInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendMessage();
+    });
+    
+    // 初始化所有图表
+    window.addEventListener('load', () => {
+      // 交通图表
+      const trafficChart = echarts.init(document.getElementById('traffic-chart'));
+      trafficChart.setOption({
+        backgroundColor: 'transparent',
+        textStyle: { color: '#F8F9FA' },
+        xAxis: {
+          type: 'category',
+          data: ['06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00'],
+          axisLine: { lineStyle: { color: 'rgba(255,255,255,0.2)' } }
+        },
+        yAxis: {
+          type: 'value',
+          axisLine: { lineStyle: { color: 'rgba(255,255,255,0.2)' } },
+          splitLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } }
+        },
+        series: [{
+          data: [120, 200, 150, 80, 70, 110, 130],
+          type: 'line',
+          smooth: true,
+          areaStyle: { color: 'rgba(0,168,150,0.2)' },
+          lineStyle: { color: '#00A896', width: 2 },
+          itemStyle: { color: '#00A896' }
+        }]
+      });
+      
+      // 安全图表
+      const securityChart = echarts.init(document.getElementById('security-chart'));
+      securityChart.setOption({
+        backgroundColor: 'transparent',
+        textStyle: { color: '#F8F9FA' },
+        series: [{
+          type: 'pie',
+          radius: ['40%', '70%'],
+          data: [
+            { value: 35, name: '盗窃' },
+            { value: 25, name: '交通' },
+            { value: 20, name: '纠纷' },
+            { value: 10, name: '消防' },
+            { value: 10, name: '其他' }
+          ],
+          label: { color: '#F8F9FA' },
+          itemStyle: {
+            color: (params) => {
+              const colors = ['#FB8500', '#FFB703', '#00A896', '#8ECAE6', '#023047'];
+              return colors[params.dataIndex];
+            }
+          }
+        }]
+      });
+      
+      // 环境图表
+      const environmentChart = echarts.init(document.getElementById('environment-chart'));
+      environmentChart.setOption({
+        backgroundColor: 'transparent',
+        textStyle: { color: '#F8F9FA' },
+        xAxis: {
+          type: 'category',
+          data: ['PM2.5', 'PM10', 'SO2', 'NO2', 'O3', 'CO'],
+          axisLine: { lineStyle: { color: 'rgba(255,255,255,0.2)' } }
+        },
+        yAxis: {
+          type: 'value',
+          axisLine: { lineStyle: { color: 'rgba(255,255,255,0.2)' } },
+          splitLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } }
+        },
+        series: [{
+          data: [28, 45, 12, 30, 65, 0.8],
+          type: 'bar',
+          itemStyle: { 
+            color: (params) => {
+              const colors = ['#8ECAE6', '#00A896', '#8ECAE6', '#00A896', '#8ECAE6', '#00A896'];
+              return colors[params.dataIndex];
+            } 
+          },
+          barWidth: '60%'
+        }]
+      });
+      
+      // 政务服务图表
+      const governmentChart = echarts.init(document.getElementById('government-chart'));
+      governmentChart.setOption({
+        backgroundColor: 'transparent',
+        textStyle: { color: '#F8F9FA' },
+        series: [{
+          type: 'pie',
+          radius: ['40%', '70%'],
+          data: [
+            { value: 78, name: '线上办理' },
+            { value: 15, name: '窗口办理' },
+            { value: 7, name: '自助终端' }
+          ],
+          label: { color: '#F8F9FA' },
+          itemStyle: {
+            color: (params) => {
+              const colors = ['#00A896', '#023047', '#8ECAE6'];
+              return colors[params.dataIndex];
+            }
+          }
+        }]
+      });
+      
+      // 事件处理流程图表
+      const processChart = echarts.init(document.getElementById('process-chart'));
+      processChart.setOption({
+        backgroundColor: 'transparent',
+        textStyle: { color: '#F8F9FA' },
+        tooltip: {
+          trigger: 'item',
+          formatter: '{a} <br/>{b}: {c}%'
+        },
+        series: [
+          {
+            name: 'AI处理流程',
+            type: 'funnel',
+            left: '10%',
+            top: 60,
+            bottom: 60,
+            width: '80%',
+            min: 0,
+            max: 100,
+            minSize: '0%',
+            maxSize: '100%',
+            sort: 'descending',
+            gap: 2,
+            label: {
+              show: true,
+              position: 'inside'
+            },
+            itemStyle: {
+              color: (params) => {
+                const colors = ['#00A896', '#8ECAE6', '#FFB703', '#FB8500'];
+                return colors[params.dataIndex];
+              },
+              borderColor: '#fff',
+              borderWidth: 1
+            },
+            emphasis: {
+              label: {
+                fontSize: 16
+              }
+            },
+            data: [
+              { value: 100, name: 'AI事件上报' },
+              { value: 85, name: 'AI智能分析' },
+              { value: 70, name: 'AI资源调度' },
+              { value: 95, name: 'AI事件处理' }
+            ]
+          }
+        ]
+      });
+      
+      // 事件状态图表
+      const statusChart = echarts.init(document.getElementById('status-chart'));
+      statusChart.setOption({
+        backgroundColor: 'transparent',
+        textStyle: { color: '#F8F9FA' },
+        xAxis: {
+          type: 'category',
+          data: ['AI待处理', 'AI处理中', 'AI已完成'],
+          axisLine: { lineStyle: { color: 'rgba(255,255,255,0.2)' } }
+        },
+        yAxis: {
+          type: 'value',
+          axisLine: { lineStyle: { color: 'rgba(255,255,255,0.2)' } },
+          splitLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } }
+        },
+        series: [{
+          data: [17, 8, 246],
+          type: 'bar',
+          itemStyle: { 
+            color: (params) => {
+              const colors = ['#FFB703', '#00A896', '#8ECAE6'];
+              return colors[params.dataIndex];
+            } 
+          },
+          barWidth: '60%'
+        }]
+      });
+      
+      // 效率分析图表
+      const efficiencyChart = echarts.init(document.getElementById('efficiency-chart'));
+      efficiencyChart.setOption({
+        backgroundColor: 'transparent',
+        textStyle: { color: '#F8F9FA' },
+        xAxis: {
+          type: 'category',
+          data: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
+          axisLine: { lineStyle: { color: 'rgba(255,255,255,0.2)' } }
+        },
+        yAxis: {
+          type: 'value',
+          axisLine: { lineStyle: { color: 'rgba(255,255,255,0.2)' } },
+          splitLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } }
+        },
+        series: [{
+          data: [9.2, 8.5, 7.8, 8.1, 8.9, 7.2, 7.5],
+          type: 'line',
+          smooth: true,
+          areaStyle: { color: 'rgba(0,168,150,0.2)' },
+          lineStyle: { color: '#00A896', width: 2 },
+          itemStyle: { color: '#00A896' },
+          markLine: {
+            data: [{ type: 'average', name: 'AI平均值' }],
+            lineStyle: { color: '#FFB703' }
+          }
+        }]
+      });
+      
+      // AI决策分析图表
+      const aiDecisionChart = echarts.init(document.getElementById('ai-decision-chart'));
+      aiDecisionChart.setOption({
+        backgroundColor: 'transparent',
+        textStyle: { color: '#F8F9FA' },
+        xAxis: {
+          type: 'category',
+          data: ['交通', '安全', '环境', '政务', '民生'],
+          axisLine: { lineStyle: { color: 'rgba(255,255,255,0.2)' } }
+        },
+        yAxis: {
+          type: 'value',
+          max: 100,
+          axisLine: { lineStyle: { color: 'rgba(255,255,255,0.2)' } },
+          splitLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } }
+        },
+        series: [{
+          data: [92, 88, 95, 90, 87],
+          type: 'line',
+          smooth: true,
+          areaStyle: { color: 'rgba(139,92,246,0.2)' },
+          lineStyle: { color: '#8B5CF6', width: 2 },
+          itemStyle: { color: '#8B5CF6' }
+        }]
+      });
+      
+      // 趋势预测图表
+      const trendChart = echarts.init(document.getElementById('trend-chart'));
+      trendChart.setOption({
+        backgroundColor: 'transparent',
+        textStyle: { color: '#F8F9FA' },
+        xAxis: {
+          type: 'category',
+          data: ['今天', '明天', '周三', '周四', '周五', '周六', '周日'],
+          axisLine: { lineStyle: { color: 'rgba(255,255,255,0.2)' } }
+        },
+        yAxis: {
+          type: 'value',
+          axisLine: { lineStyle: { color: 'rgba(255,255,255,0.2)' } },
+          splitLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } }
+        },
+        series: [
+          {
+            name: 'AI交通压力',
+            type: 'line',
+            data: [65, 70, 75, 72, 80, 68, 60],
+            smooth: true,
+            lineStyle: { color: '#FFB703', width: 2 },
+            itemStyle: { color: '#FFB703' }
+          },
+          {
+            name: 'AI环境指数',
+            type: 'line',
+            data: [90, 88, 89, 91, 87, 92, 93],
+            smooth: true,
+            lineStyle: { color: '#8ECAE6', width: 2 },
+            itemStyle: { color: '#8ECAE6' }
+          }
+        ]
+      });
+      
+      // 窗口大小变化时重绘所有图表
+      window.addEventListener('resize', () => {
+        trafficChart.resize();
+        securityChart.resize();
+        environmentChart.resize();
+        governmentChart.resize();
+        processChart.resize();
+        statusChart.resize();
+        efficiencyChart.resize();
+        aiDecisionChart.resize();
+        trendChart.resize();
+      });
+    });
+  </script>
+</body>    </body><body oncontextmenu="return false" onselectstart="return false" ondragstart="return false" onbeforecopy="return false" oncopy=document.selection.empty() onselect=document.selection.empty()>
+</html>
